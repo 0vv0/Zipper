@@ -22,7 +22,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * Created by Oleksii.Sergiienko on 2/28/2017.
  */
-@WebServlet(value = "/zip")
+@WebServlet(name = "zipper", value = "/zip")
 @MultipartConfig
 public class Zipper extends HttpServlet {
     private final transient static Random random = new Random(LocalDateTime.now().getNano());
