@@ -34,10 +34,11 @@ public class Zipper extends HttpServlet {
                 "attachment;filename=" + LocalDate.now().toString() + random.nextLong() + ".zip");
         ZipOutputStream zipOutputStream = new ZipOutputStream(resp.getOutputStream());
         String filename;
+        int size = 0;
         for (Part part : req.getParts()) {
             if (part != null && part.getSize() > 0) {
                 filename = getFileName(part);
-                zip(filename, part.getInputStream(), zipOutputStream);
+                size+= zip(filename, part.getInputStream(), zipOutputStream);
             }
         }
         zipOutputStream.flush();
@@ -67,7 +68,7 @@ public class Zipper extends HttpServlet {
         return LocalDate.now().toString() + random.nextLong();
     }
 
-    private static void zip(String name, InputStream inputStream, ZipOutputStream zipOutputStream) throws IOException {
+    private static long zip(String name, InputStream inputStream, ZipOutputStream zipOutputStream) throws IOException {
 
         // a ZipEntry represents a file entry in the zip archive
         ZipEntry zipEntry = new ZipEntry(name);
@@ -79,7 +80,8 @@ public class Zipper extends HttpServlet {
         while ((bytesRead = inputStream.read(buf)) > 0) {
             zipOutputStream.write(buf, 0, bytesRead);
         }
-
+        long size = zipEntry.getCompressedSize();
         zipOutputStream.closeEntry();
+        return size;
     }
 }
