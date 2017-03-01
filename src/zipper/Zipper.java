@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -33,12 +35,14 @@ public class Zipper extends HttpServlet {
         resp.setHeader("Content-Disposition",
                 "attachment;filename=" + LocalDate.now().toString() + random.nextLong() + ".zip");
         ZipOutputStream zipOutputStream = new ZipOutputStream(resp.getOutputStream());
+        Set<String> filenames = new HashSet<>();
         String filename;
-        int size = 0;
         for (Part part : req.getParts()) {
             if (part != null && part.getSize() > 0) {
-                filename = getFileName(part);
-                size+= zip(filename, part.getInputStream(), zipOutputStream);
+                filename = getFileName(part).intern();
+                if(filenames.contains(filename)){filename+=random.nextLong();}
+                filenames.add(filename);
+                zip(filename, part.getInputStream(), zipOutputStream);
             }
         }
         zipOutputStream.flush();
