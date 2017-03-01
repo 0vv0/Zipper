@@ -28,37 +28,20 @@ public class Zipper extends HttpServlet {
     private final transient static Random random = new Random(LocalDateTime.now().getNano());
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Part file1Part = req.getPart("1"); // Retrieves <input type="file" name="1">
-        Part file2Part = req.getPart("2"); // Retrieves <input type="file" name="2">
-        Part file3Part = req.getPart("3"); // Retrieves <input type="file" name="3">
-
-        if (file1Part == null && file2Part == null && file3Part == null) {
-            resp.sendRedirect("/");
-        } else {
-            resp.setContentType("application/octet-stream");
-            resp.setHeader("Content-Disposition",
-                    "attachment;filename=" + LocalDate.now().toString() + random.nextLong() + ".zip");
-            ZipOutputStream zipOutputStream = new ZipOutputStream(resp.getOutputStream());
-            String filename;
-            if (file1Part != null && file1Part.getSize() > 0) {
-                filename = getFileName(file1Part);
-                filename = filename == null ? "file1" : filename;
-                zip(filename, file1Part.getInputStream(), zipOutputStream);
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        resp.setContentType("application/octet-stream");
+        resp.setHeader("Content-Disposition",
+                "attachment;filename=" + LocalDate.now().toString() + random.nextLong() + ".zip");
+        ZipOutputStream zipOutputStream = new ZipOutputStream(resp.getOutputStream());
+        String filename;
+        for (Part part : req.getParts()) {
+            if (part != null && part.getSize() > 0) {
+                filename = getFileName(part);
+                zip(filename, part.getInputStream(), zipOutputStream);
             }
-            if (file2Part != null && file2Part.getSize() > 0) {
-                filename = getFileName(file2Part);
-                filename = filename == null ? "file2" : filename;
-                zip(filename, file2Part.getInputStream(), zipOutputStream);
-            }
-            if (file3Part != null && file3Part.getSize() > 0) {
-                filename = getFileName(file3Part);
-                filename = filename == null ? "file3" : filename;
-                zip(filename, file3Part.getInputStream(), zipOutputStream);
-            }
-            zipOutputStream.flush();
-            zipOutputStream.close();
         }
+        zipOutputStream.flush();
+        zipOutputStream.close();
     }
 
     private static void saveToFile(String id, Part part) throws IOException {
@@ -75,16 +58,16 @@ public class Zipper extends HttpServlet {
 
     private static String getFileName(final Part part) {
         final String partHeader = part.getHeader("content-disposition");
-        for (String content : part.getHeader("content-disposition").split(";")) {
+        for (String content : partHeader.split(";")) {
             if (content.trim().startsWith("filename")) {
                 return content.substring(
                         content.indexOf('=') + 1).trim().replace("\"", "");
             }
         }
-        return null;
+        return LocalDate.now().toString() + random.nextLong();
     }
 
-    public static void zip(String name, InputStream inputStream, ZipOutputStream zipOutputStream) throws IOException {
+    private static void zip(String name, InputStream inputStream, ZipOutputStream zipOutputStream) throws IOException {
 
         // a ZipEntry represents a file entry in the zip archive
         ZipEntry zipEntry = new ZipEntry(name);
